@@ -1,0 +1,18 @@
+[debug] [2019-09-04T00:52:04.245Z] ----------------------------------------------------------------------
+[debug] [2019-09-04T00:52:04.247Z] Command:       /usr/bin/node /usr/local/bin/firebase serve --only functions
+[debug] [2019-09-04T00:52:04.247Z] CLI Version:   7.2.3
+[debug] [2019-09-04T00:52:04.247Z] Platform:      linux
+[debug] [2019-09-04T00:52:04.247Z] Node Version:  v8.10.0
+[debug] [2019-09-04T00:52:04.247Z] Time:          Tue Sep 03 2019 21:52:04 GMT-0300 (-03)
+[debug] [2019-09-04T00:52:04.248Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2019-09-04T00:52:04.252Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2019-09-04T00:52:04.253Z] > authorizing via signed-in user
+[debug] [2019-09-04T00:52:04.253Z] [iam] checking project remember-4c39b for permissions ["firebase.projects.get"]
+[debug] [2019-09-04T00:52:04.254Z] >>> HTTP REQUEST POST https://cloudresourcemanager.googleapis.com/v1/projects/remember-4c39b:testIamPermissions  
+
+[debug] [2019-09-04T00:52:04.321Z] Error: getaddrinfo ENOTFOUND cloudresourcemanager.googleapis.com cloudresourcemanager.googleapis.com:443
+    at errnoException (dns.js:50:10)
+    at GetAddrInfoReqWrap.onlookup [as oncomplete] (dns.js:92:26)
+[error] 
+[error] Error: Server Error. getaddrinfo ENOTFOUND cloudresourcemanager.googleapis.com cloudresourcemanager.googleapis.com:443
