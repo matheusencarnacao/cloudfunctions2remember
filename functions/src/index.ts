@@ -3,11 +3,15 @@ import * as admin from 'firebase-admin';
 import * as express from 'express';
 import * as bodyParser from "body-parser";
 import { StringUtils, DateUtils } from './utils';
-import { PositionRequest, PositionResponse } from './position';
+import { PositionRequest, PositionResponse, CurrentPositionRequest } from './position';
 import { Device, UserDeviceResgiter } from './device';
-import { User } from './user';
+// import { User } from './user';
 
 const serviceAccount = require("../serviceAccountKey.json");
+
+const devicesBD = "/devices"
+const usersBD = "/users"
+const positionsBD ="/positions"
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
@@ -24,7 +28,9 @@ main.use(bodyParser.json())
 main.use(bodyParser.urlencoded({ extended: false }));
 
 export const webAPI = functions.https.onRequest(main)
-
+/**
+ * Cadastrar device
+ */
 app.post('/device', async (req, res) => {
     const device = req.body as Device
 
@@ -34,13 +40,16 @@ app.post('/device', async (req, res) => {
 
     const key = new StringUtils(device.macaddress).convertToBase64()
 
-    db.ref("/devices")
+    db.ref(devicesBD)
         .child(key)
         .set(device)
         .then(snapshot => res.sendStatus(200))
         .catch(error => res.status(500).send(error))
 })
 
+/**
+ * Salva posição
+ */
 app.post('/position', async (req, res) => {
     const position = req.body as PositionRequest
 
@@ -54,7 +63,7 @@ app.post('/position', async (req, res) => {
 
     const today = new DateUtils(now).getPartition()
 
-    const partition = db.ref("/positions")
+    const partition = db.ref(positionsBD)
         .child(key)
         .child(today)
     const uuid = partition.push().key
@@ -70,35 +79,60 @@ app.post('/position', async (req, res) => {
 
 })
 
-app.get('/devices/', async (req, res) => {
+app.get('/position', async (req, res) => {
+    const positionReq = req.body as CurrentPositionRequest
+    if(!positionReq.macaddress){
+        res.sendStatus(400)
+    }
+    const deviceId = new StringUtils(positionReq.macaddress).convertToBase64()
+
+    db.ref(positionsBD)
+        .child(deviceId)
+        .orderByKey()
+        .limitToLast(1)
+        .once('value')
+        .then(partition => partition.ref.limitToLast(1))
+        .then(positionRef => positionRef.once('value'))
+        .then(position => res.status(200).send(position.val()))
+        .catch(error => res.status(500).send(error))
+})
+
+/**
+ * retorna informações do device
+ */
+app.get('/device/', async (req, res) => {
     const deviceId = req.query.deviceId
     if (!deviceId) res.status(400)
 
-    db.ref("/devices")
+    db.ref(devicesBD)
         .child(deviceId)
         .once('value')
-        .then(snapshot => {
-            console.log(snapshot.val())
-        })
+        .then(snapshot => res.status(200).send(snapshot.val()))
         .catch(error => res.status(404).send("Device not found"))
 })
 
+/**
+ * Registra vinculo entre usuario e device
+ */
 app.post('/register', async (req, res) => {
     const deviceRegister = req.body as UserDeviceResgiter
     if (!deviceRegister.macaddress || !deviceRegister.userId){
         res.sendStatus(400)
     }
 
-    const userRef = db.ref("/users").child(deviceRegister.userId);
+    const userRef = db.ref(usersBD).child(deviceRegister.userId);
     
     userRef.once('value')
-        .then(snapshot => snapshot.val() as User)
-        .then(user => {
-            user.devices.push(deviceRegister.macaddress)
-
-            userRef.update(user)
-                .then(sucess => res.status(200).send(sucess))
+        .then(snapshot => snapshot.child("devices"))
+        .then(devices => {
+            devices.forEach(action => {
+                if(action.val() === deviceRegister.macaddress){
+                    res.sendStatus(409)
+                }
+            })
+            devices.ref.push().set(deviceRegister.macaddress)
+                .then(success => res.sendStatus(200))
                 .catch(error => res.status(500).send(error))
         })
-        .catch(error => res.status(404).send("User not found"))
+        .catch(error => res.status(500).send(error))
 })

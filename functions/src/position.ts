@@ -15,3 +15,16 @@ export class PositionResponse {
         public deviceId: string
     ){}
 }
+
+export class CurrentPositionRequest {
+    constructor(
+        public macaddress: string
+    ){}
+}
+
+export class ListPositionRequest {
+    constructor(
+        public deviceId: string,
+        public data: Date
+    ){}
+}
