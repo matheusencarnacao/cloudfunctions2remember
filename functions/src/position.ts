@@ -8,7 +8,7 @@ export class PositionRequest {
 
 export class PositionResponse {
     constructor(
-        public uuid: string,
+        public uuid: number,
         public lat: number,
         public lng: number,
         public date: string,

@@ -66,17 +66,19 @@ app.post('/position', async (req, res) => {
     const partition = db.ref(positionsBD)
         .child(key)
         .child(today)
-    const uuid = partition.push().key
+    
+    partition.orderByKey().once('value')
+        .then(action => {
+            const uuid = action.numChildren() + 1
 
-    if (!uuid) res.status(500).send("Error inserting in DB")
+            const positionResponse = new PositionResponse(uuid, position.lat, position.lng, now.toISOString(), key)
 
-    const positionResponse = new PositionResponse(uuid!, position.lat, position.lng, now.toISOString(), key)
-
-    partition.child(uuid!)
-        .set(positionResponse)
-        .then(snapshot => res.sendStatus(200))
-        .catch(error => res.status(500).send(error))
-
+            partition.child(uuid.toString())
+                .set(positionResponse)
+                .then(snapshot => res.sendStatus(200))
+                .catch(error => res.status(500).send(error))
+        })
+        .catch(error => res.status(500).send("Error inserting in DB"))
 })
 
 app.get('/position', async (req, res) => {
@@ -91,9 +93,11 @@ app.get('/position', async (req, res) => {
         .orderByKey()
         .limitToLast(1)
         .once('value')
-        .then(partition => partition.ref.limitToLast(1))
-        .then(positionRef => positionRef.once('value'))
-        .then(position => res.status(200).send(position.val()))
+        .then(partition => {
+            const lP = partition.child(partition.numChildren().toString())
+            console.log(partition.val())
+            res.status(200).send(lP.val())
+        })
         .catch(error => res.status(500).send(error))
 })
 

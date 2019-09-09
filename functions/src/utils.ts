@@ -13,7 +13,7 @@ export class DateUtils{
     getPartition(){
         const ano = this.date.getFullYear()
         const mes = this.date.getMonth() + 1
-        const dia = this.date.getDay()
+        const dia = this.date.getDate()
 
         return ano.toString() + mes.toString() + dia.toString()
     }
