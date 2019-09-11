@@ -1,37 +1,26 @@
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
-import * as express from 'express';
-import * as bodyParser from "body-parser";
 import { StringUtils, DateUtils } from './utils';
-import { PositionRequest, PositionResponse, CurrentPositionRequest } from './position';
+import { PositionRequest, PositionResponse } from './position';
 import { Device, UserDeviceResgiter } from './device';
-// import { User } from './user';
-
-const serviceAccount = require("../serviceAccountKey.json");
 
 const devicesBD = "/devices"
 const usersBD = "/users"
 const positionsBD ="/positions"
-
+const serviceAccount = require("../serviceAccountKey.json");
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
   databaseURL: "https://remember-4c39b.firebaseio.com"
-});
+}); 
+
+// admin.initializeApp(functions.config().firebase);
 
 const db = admin.database()
 
-const app = express();
-const main = express();
-
-main.use('/api/v1', app)
-main.use(bodyParser.json())
-main.use(bodyParser.urlencoded({ extended: false }));
-
-export const webAPI = functions.https.onRequest(main)
 /**
  * Cadastrar device
  */
-app.post('/device', async (req, res) => {
+export const newDevice = functions.https.onRequest(async (req, res) => {
     const device = req.body as Device
 
     if (!device.macaddress){
@@ -45,12 +34,12 @@ app.post('/device', async (req, res) => {
         .set(device)
         .then(snapshot => res.sendStatus(200))
         .catch(error => res.status(500).send(error))
-})
+});
 
 /**
- * Salva posição
+ * Inserir nova posição
  */
-app.post('/position', async (req, res) => {
+export const newPosition = functions.https.onRequest(async (req, res) => {
     const position = req.body as PositionRequest
 
     if(!position.macaddress){
@@ -67,26 +56,25 @@ app.post('/position', async (req, res) => {
         .child(key)
         .child(today)
     
-    partition.orderByKey().once('value')
-        .then(action => {
-            const uuid = action.numChildren() + 1
+    const uuid = partition.push().key
 
-            const positionResponse = new PositionResponse(uuid, position.lat, position.lng, now.toISOString(), key)
+    const positionResponse = new PositionResponse(uuid!, position.lat, position.lng, now.toISOString(), key)
 
-            partition.child(uuid.toString())
-                .set(positionResponse)
-                .then(snapshot => res.sendStatus(200))
-                .catch(error => res.status(500).send(error))
-        })
-        .catch(error => res.status(500).send("Error inserting in DB"))
+    partition.child(uuid!)
+        .set(positionResponse)
+        .then(snapshot => res.sendStatus(200))
+        .catch(error => res.status(500).send(error))
 })
 
-app.get('/position', async (req, res) => {
-    const positionReq = req.body as CurrentPositionRequest
-    if(!positionReq.macaddress){
+/**
+ * Retorna ultima posição do device
+ */
+export const lastPosition = functions.https.onRequest(async (req, res) => {
+    const macaddress: string = req.query.macaddress
+    if(!macaddress){
         res.sendStatus(400)
     }
-    const deviceId = new StringUtils(positionReq.macaddress).convertToBase64()
+    const deviceId = new StringUtils(macaddress).convertToBase64()
 
     db.ref(positionsBD)
         .child(deviceId)
@@ -94,9 +82,14 @@ app.get('/position', async (req, res) => {
         .limitToLast(1)
         .once('value')
         .then(partition => {
-            const lP = partition.child(partition.numChildren().toString())
-            console.log(partition.val())
-            res.status(200).send(lP.val())
+            partition.forEach(posRef => {
+                const positions: PositionResponse[] = []
+                posRef.forEach(info => { positions.push(info.val() as PositionResponse) })
+                let response = {}
+                if(positions.length > 0)
+                    response = positions[positions.length-1]
+                res.status(200).send(response)
+            })
         })
         .catch(error => res.status(500).send(error))
 })
@@ -104,7 +97,7 @@ app.get('/position', async (req, res) => {
 /**
  * retorna informações do device
  */
-app.get('/device/', async (req, res) => {
+export const infoDevice = functions.https.onRequest(async (req, res) => {
     const deviceId = req.query.deviceId
     if (!deviceId) res.status(400)
 
@@ -118,7 +111,7 @@ app.get('/device/', async (req, res) => {
 /**
  * Registra vinculo entre usuario e device
  */
-app.post('/register', async (req, res) => {
+export const newRegister = functions.https.onRequest(async (req, res) => {
     const deviceRegister = req.body as UserDeviceResgiter
     if (!deviceRegister.macaddress || !deviceRegister.userId){
         res.sendStatus(400)
@@ -139,4 +132,13 @@ app.post('/register', async (req, res) => {
                 .catch(error => res.status(500).send(error))
         })
         .catch(error => res.status(500).send(error))
+})
+
+export const outOfRange = functions.https.onRequest(async (req, res) => {
+    const position = req.body as PositionRequest
+    if(!position.macaddress){
+        res.status(400).send("Macaddress is missing!")
+    }
+
+    //TODO: serviço de notificação
 })
