@@ -10,3 +10,11 @@ export class User{
         public name?: string    
     ){}
 }
+
+export class UserTokenRegister {
+
+    constructor(
+        public userId: string,
+        public token: string
+    ){}
+}

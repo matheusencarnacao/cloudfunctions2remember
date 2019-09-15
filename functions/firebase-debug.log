@@ -1,0 +1,36 @@
+[debug] [2019-09-15T18:15:54.942Z] ----------------------------------------------------------------------
+[debug] [2019-09-15T18:15:55.415Z] Command:       /usr/bin/node /usr/local/bin/firebase serve --only functions
+[debug] [2019-09-15T18:15:55.416Z] CLI Version:   7.2.3
+[debug] [2019-09-15T18:15:55.416Z] Platform:      linux
+[debug] [2019-09-15T18:15:55.416Z] Node Version:  v8.10.0
+[debug] [2019-09-15T18:15:55.417Z] Time:          Sun Sep 15 2019 15:15:55 GMT-0300 (-03)
+[debug] [2019-09-15T18:15:55.417Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2019-09-15T18:15:59.772Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2019-09-15T18:15:59.773Z] > authorizing via signed-in user
+[debug] [2019-09-15T18:15:59.773Z] [iam] checking project remember-4c39b for permissions ["firebase.projects.get"]
+[debug] [2019-09-15T18:15:59.779Z] > refreshing access token with scopes: ["email","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","openid"]
+[debug] [2019-09-15T18:15:59.780Z] >>> HTTP REQUEST POST https://www.googleapis.com/oauth2/v3/token  
+ <request body omitted>
+[debug] [2019-09-15T18:16:14.062Z] <<< HTTP RESPONSE 200
+[debug] [2019-09-15T18:16:14.801Z] >>> HTTP REQUEST POST https://cloudresourcemanager.googleapis.com/v1/projects/remember-4c39b:testIamPermissions  
+
+[debug] [2019-09-15T18:16:16.449Z] <<< HTTP RESPONSE 200
+[debug] [2019-09-15T18:16:16.454Z] >>> HTTP REQUEST GET https://firebase.googleapis.com/v1beta1/projects/remember-4c39b  
+ 
+[debug] [2019-09-15T18:16:17.720Z] <<< HTTP RESPONSE 200
+[info] ✔  functions: Using node@8 from host.
+[info] ✔  functions: Emulator started at http://localhost:5000
+[info] i  functions: Watching "/home/matheus/playground/firebase/fb-functions/functions" for Cloud Functions...
+[debug] [2019-09-15T18:17:05.843Z] [runtime-status] Functions runtime initialized. {"cwd":"/home/matheus/playground/firebase/fb-functions/functions","node_version":"8.10.0"}
+[debug] [2019-09-15T18:17:05.844Z] [runtime-status] Disabled runtime features: {"functions_config_helper":true,"network_filtering":true,"timeout":true,"memory_limiting":true,"admin_stubs":true} {}
+[debug] [2019-09-15T18:17:06.431Z] [runtime-status] Resolved module firebase-admin {"declared":true,"installed":true,"version":"8.4.0","resolution":"/home/matheus/playground/firebase/fb-functions/functions/node_modules/firebase-admin/lib/index.js"}
+[debug] [2019-09-15T18:17:06.802Z] [runtime-status] Resolved module firebase-functions {"declared":true,"installed":true,"version":"3.2.0","resolution":"/home/matheus/playground/firebase/fb-functions/functions/node_modules/firebase-functions/lib/index.js"}
+[debug] [2019-09-15T18:17:06.807Z] [runtime-status] Resolved module firebase-functions {"declared":true,"installed":true,"version":"3.2.0","resolution":"/home/matheus/playground/firebase/fb-functions/functions/node_modules/firebase-functions/lib/index.js"}
+[info] ✔  functions[newDevice]: http function initialized (http://localhost:5000/remember-4c39b/us-central1/newDevice).
+[info] ✔  functions[newPosition]: http function initialized (http://localhost:5000/remember-4c39b/us-central1/newPosition).
+[info] ✔  functions[lastPosition]: http function initialized (http://localhost:5000/remember-4c39b/us-central1/lastPosition).
+[info] ✔  functions[infoDevice]: http function initialized (http://localhost:5000/remember-4c39b/us-central1/infoDevice).
+[info] ✔  functions[newRegister]: http function initialized (http://localhost:5000/remember-4c39b/us-central1/newRegister).
+[info] ✔  functions[outOfRange]: http function initialized (http://localhost:5000/remember-4c39b/us-central1/outOfRange).
+[info] ✔  functions[newToken]: http function initialized (http://localhost:5000/remember-4c39b/us-central1/newToken).

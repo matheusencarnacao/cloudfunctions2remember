@@ -1,12 +1,15 @@
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 import { StringUtils, DateUtils } from './utils';
-import { PositionRequest, PositionResponse } from './position';
+import { PositionRequest, PositionResponse, CurrentPositionRequest } from './position';
 import { Device, UserDeviceResgiter } from './device';
+import { UserTokenRegister, User } from './user';
 
 const devicesBD = "/devices"
 const usersBD = "/users"
 const positionsBD ="/positions"
+const tokens = "/tokens"
+const bounds = "/bounds"
 const serviceAccount = require("../serviceAccountKey.json");
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
@@ -70,11 +73,11 @@ export const newPosition = functions.https.onRequest(async (req, res) => {
  * Retorna ultima posição do device
  */
 export const lastPosition = functions.https.onRequest(async (req, res) => {
-    const macaddress: string = req.query.macaddress
-    if(!macaddress){
+    const currentPos = req.body as CurrentPositionRequest
+    if(!currentPos.macaddress){
         res.sendStatus(400)
     }
-    const deviceId = new StringUtils(macaddress).convertToBase64()
+    const deviceId = new StringUtils(currentPos.macaddress).convertToBase64()
 
     db.ref(positionsBD)
         .child(deviceId)
@@ -120,16 +123,22 @@ export const newRegister = functions.https.onRequest(async (req, res) => {
     const userRef = db.ref(usersBD).child(deviceRegister.userId);
     
     userRef.once('value')
-        .then(snapshot => snapshot.child("devices"))
-        .then(devices => {
-            devices.forEach(action => {
-                if(action.val() === deviceRegister.macaddress){
-                    res.sendStatus(409)
-                }
-            })
-            devices.ref.push().set(deviceRegister.macaddress)
-                .then(success => res.sendStatus(200))
-                .catch(error => res.status(500).send(error))
+        .then(snapshot => {
+            const user = snapshot.val() as User
+            if(user.uuid !== deviceRegister.userId){
+                res.status(404)
+            }
+        })
+        .then(() => {
+
+            const deviceKey = new StringUtils(deviceRegister.macaddress).convertToBase64();
+
+            db.ref(bounds)
+                .child(deviceKey)
+                .push()
+                .set(deviceRegister.userId)
+                .then(() => res.sendStatus(200))
+                .catch(err => res.status(500).send(err))
         })
         .catch(error => res.status(500).send(error))
 })
@@ -141,4 +150,29 @@ export const outOfRange = functions.https.onRequest(async (req, res) => {
     }
 
     //TODO: serviço de notificação
+    
+})
+
+export const newToken = functions.https.onRequest(async (req, res) => {
+    const tokenRegister = req.body as UserTokenRegister
+    if(!tokenRegister.userId || !tokenRegister.token){
+        res.sendStatus(400)
+    }
+
+    const userRef = db.ref(usersBD).child(tokenRegister.userId);
+     
+    userRef.once('value')
+        .then(snapshot => snapshot.child("uuid"))
+        .then(uuid => {
+            if(uuid.val() === tokenRegister.userId){
+                db.ref(tokens)
+                    .child(uuid.val())
+                    .push(tokenRegister.token)
+                    .then(snapshot => res.sendStatus(200))
+                    .catch(error => res.status(500).send(error))
+            } else {
+                res.sendStatus(404);
+            }
+        })
+        .catch(error => res.status(500).send(error))
 })
