@@ -166,6 +166,7 @@ export const outOfRange = functions.https.onRequest(async (req, res) => {
             })
             res.sendStatus(200)
         })
+        .catch(error => res.status(500).send(error))
 })
 
 export const newToken = functions.https.onRequest(async (req, res) => {
