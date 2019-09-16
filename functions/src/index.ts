@@ -149,8 +149,23 @@ export const outOfRange = functions.https.onRequest(async (req, res) => {
         res.status(400).send("Macaddress is missing!")
     }
 
-    //TODO: serviço de notificação
+    const deviceId = new StringUtils(position.macaddress).convertToBase64()
     
+    db.ref(tokens)
+        .child(deviceId)
+        .once('value')
+        .then(snapshots => {
+            snapshots.forEach(token => {
+                const message = {
+                    data: { lat: position.lat.toString(), lng: position.lng.toString() },
+                    token: token.val()
+                }
+                admin.messaging().send(message)
+                    .then(() => console.log("Message sended with success!"))
+                    .catch(error => console.log(error))
+            })
+            res.sendStatus(200)
+        })
 })
 
 export const newToken = functions.https.onRequest(async (req, res) => {
@@ -165,9 +180,13 @@ export const newToken = functions.https.onRequest(async (req, res) => {
         .then(snapshot => snapshot.child("uuid"))
         .then(uuid => {
             if(uuid.val() === tokenRegister.userId){
+                const token = {
+                    token: tokenRegister.token,
+                    date: new Date().toISOString()
+                }
                 db.ref(tokens)
                     .child(uuid.val())
-                    .push(tokenRegister.token)
+                    .push(token)
                     .then(snapshot => res.sendStatus(200))
                     .catch(error => res.status(500).send(error))
             } else {
