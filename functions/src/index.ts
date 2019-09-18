@@ -143,6 +143,9 @@ export const newRegister = functions.https.onRequest(async (req, res) => {
         .catch(error => res.status(500).send(error))
 })
 
+/**
+ * Avisa ao app que o cel esta fora do raio seguro
+ */
 export const outOfRange = functions.https.onRequest(async (req, res) => {
     const position = req.body as PositionRequest
     if(!position.macaddress){
@@ -169,6 +172,9 @@ export const outOfRange = functions.https.onRequest(async (req, res) => {
         .catch(error => res.status(500).send(error))
 })
 
+/**
+ * Inserir novo Token.
+ */
 export const newToken = functions.https.onRequest(async (req, res) => {
     const tokenRegister = req.body as UserTokenRegister
     if(!tokenRegister.userId || !tokenRegister.token){
