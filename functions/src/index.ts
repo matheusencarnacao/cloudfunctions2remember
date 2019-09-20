@@ -202,3 +202,30 @@ export const newToken = functions.https.onRequest(async (req, res) => {
         })
         .catch(error => res.status(500).send(error))
 })
+
+/**
+ * Botão de panico
+ */
+export const panicButton = functions.https.onRequest(async (req, res) => {
+    //TODO: enviar notificação para o app
+    //macaddress
+    //desativar pelo app
+})
+
+/**
+ * fora do pulso
+ */
+export const disconnectedBand = functions.https.onRequest(async (req, res)=> {
+    //TODO: enviar notificação para o app
+    //macaddress
+    //True:disconectado False:conectado 
+})
+
+/**
+ * low battery
+ */
+export const lowBattery = functions.https.onRequest(async (req, res) => {
+    //TODO: enviar notificação para o app
+    //macaddress
+    //True: bateria fraca False: bateria deboa
+})
