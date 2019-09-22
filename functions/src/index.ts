@@ -2,8 +2,9 @@ import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 import { StringUtils, DateUtils } from './utils';
 import { PositionRequest, PositionResponse, CurrentPositionRequest } from './position';
-import { Device, UserDeviceResgiter } from './device';
+import { Device, UserDeviceResgiter, DeviceStatusRequest } from './device';
 import { UserTokenRegister, User } from './user';
+import { FirebaseMeessageService } from './FCM';
 
 const devicesBD = "/devices"
 const usersBD = "/users"
@@ -153,23 +154,10 @@ export const outOfRange = functions.https.onRequest(async (req, res) => {
     }
 
     const deviceId = new StringUtils(position.macaddress).convertToBase64()
-    
-    db.ref(tokens)
-        .child(deviceId)
-        .once('value')
-        .then(snapshots => {
-            snapshots.forEach(token => {
-                const message = {
-                    data: { lat: position.lat.toString(), lng: position.lng.toString() },
-                    token: token.val()
-                }
-                admin.messaging().send(message)
-                    .then(() => console.log("Message sended with success!"))
-                    .catch(error => console.log(error))
-            })
-            res.sendStatus(200)
-        })
-        .catch(error => res.status(500).send(error))
+
+    const fcm = new FirebaseMeessageService(db, admin.messaging());
+
+    fcm.send(deviceId, { lat: position.lat.toString(), lng: position.lng.toString() }, res)
 })
 
 /**
@@ -210,6 +198,16 @@ export const panicButton = functions.https.onRequest(async (req, res) => {
     //TODO: enviar notificação para o app
     //macaddress
     //desativar pelo app
+    const body = req.body as DeviceStatusRequest
+    if(!body.macaddress){
+        res.status(400).send("MacAddress is missing!")
+    }
+
+    let deviceId = new StringUtils(body.macaddress).convertToBase64();
+
+    const fcm = new FirebaseMeessageService(db, admin.messaging());
+
+    fcm.send(deviceId, { panic: true }, res)
 })
 
 /**

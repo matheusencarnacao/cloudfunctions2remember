@@ -11,3 +11,10 @@ export class UserDeviceResgiter{
         public macaddress: string
     ){}
 }
+
+export class DeviceStatusRequest {
+    constructor(
+        public macaddress: string,
+        public status: Boolean
+    ){}
+}
