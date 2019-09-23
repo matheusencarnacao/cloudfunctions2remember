@@ -4,7 +4,7 @@ import { StringUtils, DateUtils } from './utils';
 import { PositionRequest, PositionResponse, CurrentPositionRequest } from './position';
 import { Device, UserDeviceResgiter, DeviceStatusRequest } from './device';
 import { UserTokenRegister, User } from './user';
-import { FirebaseMeessageService } from './FCM';
+import { FirebaseMeessageService } from './firebase_service';
 
 const devicesBD = "/devices"
 const usersBD = "/users"
@@ -203,11 +203,11 @@ export const panicButton = functions.https.onRequest(async (req, res) => {
         res.status(400).send("MacAddress is missing!")
     }
 
-    let deviceId = new StringUtils(body.macaddress).convertToBase64();
+    const deviceId = new StringUtils(body.macaddress).convertToBase64();
 
     const fcm = new FirebaseMeessageService(db, admin.messaging());
 
-    fcm.send(deviceId, { panic: true }, res)
+    fcm.send(deviceId, { panicButton: JSON.stringify(body.status) }, res)
 })
 
 /**
@@ -217,6 +217,16 @@ export const disconnectedBand = functions.https.onRequest(async (req, res)=> {
     //TODO: enviar notificação para o app
     //macaddress
     //True:disconectado False:conectado 
+    const body = req.body as DeviceStatusRequest
+    if(!body.macaddress){
+        res.status(400).send("MacAddress is missing!")
+    }
+
+    const deviceId = new StringUtils(body.macaddress).convertToBase64();
+
+    const fcm = new FirebaseMeessageService(db, admin.messaging());
+
+    fcm.send(deviceId, { disconnectedBand: JSON.stringify(body.status) }, res)
 })
 
 /**
@@ -226,4 +236,14 @@ export const lowBattery = functions.https.onRequest(async (req, res) => {
     //TODO: enviar notificação para o app
     //macaddress
     //True: bateria fraca False: bateria deboa
+    const body = req.body as DeviceStatusRequest
+    if(!body.macaddress){
+        res.status(400).send("MacAddress is missing!")
+    }
+
+    const deviceId = new StringUtils(body.macaddress).convertToBase64();
+
+    const fcm = new FirebaseMeessageService(db, admin.messaging());
+
+    fcm.send(deviceId, { lowBattery: JSON.stringify(body.status) }, res)
 })
