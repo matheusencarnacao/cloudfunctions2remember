@@ -20,9 +20,11 @@ export class FirebaseMeessageService {
                     const userId = user.val()
                     this.db.ref(this.tokens)
                         .child(userId)
+                        .orderByKey()
+                        .limitToLast(1)
                         .once('value')
-                        .then(snapshots => {
-                            snapshots.forEach(token => {
+                        .then(value => {
+                            value.forEach(token => {
                                 const message = {
                                     data:   data,
                                     token: token.val().token
@@ -31,11 +33,12 @@ export class FirebaseMeessageService {
                                 this.messaging.send(message)
                                     .then(() => console.log("Message sended with success!"))
                                     .catch(error => console.log(error))
+                                res.sendStatus(200)
                             })
-                            res.sendStatus(200)
                         })
-                        .catch(error => res.status(500).send(error))
+                        .catch(error => console.log(error))
                  })
+                 //res.sendStatus(200)
             })
             .catch(err => res.status(500).send(err))
     }
