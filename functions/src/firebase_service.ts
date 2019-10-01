@@ -11,35 +11,42 @@ export class FirebaseMeessageService {
         private messaging: admin.messaging.Messaging
     ){}
 
-    public send(deviceId: string, data:any, res: functions.Response){
-        this.db.ref(this.bounds)
+    public async send(deviceId: string, data:any, res: functions.Response){
+        const userIds = await this.db.ref(this.bounds)
             .child(deviceId)
             .once('value')
             .then(snapshot => {
-                snapshot.forEach(user => { 
-                    const userId = user.val()
-                    this.db.ref(this.tokens)
-                        .child(userId)
-                        .orderByKey()
-                        .limitToLast(1)
-                        .once('value')
-                        .then(value => {
-                            value.forEach(token => {
-                                const message = {
-                                    data:   data,
-                                    token: token.val().token
-                                }
-                                console.log(message)
-                                this.messaging.send(message)
-                                    .then(() => console.log("Message sended with success!"))
-                                    .catch(error => console.log(error))
-                                res.sendStatus(200)
-                            })
-                        })
-                        .catch(error => console.log(error))
-                 })
-                 //res.sendStatus(200)
+                const users:string[]  = []
+                snapshot.forEach(user => { users.push(user.val())})
+                return users;
             })
-            .catch(err => res.status(500).send(err))
+            .catch(err => [])
+        console.log(userIds)
+        for (const userId of userIds){
+            const tokens = await this.db.ref(this.tokens)
+                .child(userId)
+                .orderByKey()
+                .limitToLast(1)
+                .once('value')
+                .then(snapshot => {
+                    const tokenList: string[] = [] 
+                    snapshot.forEach(token => { tokenList.push(token.val().token) })
+                    return tokenList;
+                })
+                .catch(error => [])
+            console.log(tokens);
+            for (const token of tokens){
+                const message = {
+                    data:   data,
+                    token: token
+                }
+                console.log(message)
+                const status = await this.messaging.send(message)
+                    .then(() => 200)
+                    .catch(error => 500)
+                console.log(status);
+            }
+        }
+        res.sendStatus(200)
     }
 }

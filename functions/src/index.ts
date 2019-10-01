@@ -145,22 +145,6 @@ export const newRegister = functions.https.onRequest(async (req, res) => {
 })
 
 /**
- * Avisa ao app que o cel esta fora do raio seguro
- */
-export const outOfRange = functions.https.onRequest(async (req, res) => {
-    const position = req.body as PositionRequest
-    if(!position.macaddress){
-        res.status(400).send("Macaddress is missing!")
-    }
-
-    const deviceId = new StringUtils(position.macaddress).convertToBase64()
-
-    const fcm = new FirebaseMeessageService(db, admin.messaging());
-
-    fcm.send(deviceId, { lat: position.lat.toString(), lng: position.lng.toString() }, res)
-})
-
-/**
  * Inserir novo Token.
  */
 export const newToken = functions.https.onRequest(async (req, res) => {
@@ -192,12 +176,27 @@ export const newToken = functions.https.onRequest(async (req, res) => {
 })
 
 /**
+ * Avisa ao app que o cel esta fora do raio seguro
+ */
+export const outOfRange = functions.https.onRequest(async (req, res) => {
+    const position = req.body as PositionRequest
+    if(!position.macaddress){
+        res.status(400).send("Macaddress is missing!")
+    }
+
+    const deviceId = new StringUtils(position.macaddress).convertToBase64()
+
+    const fcm = new FirebaseMeessageService(db, admin.messaging());
+
+    fcm.send(deviceId, { type: "outOfRange", lat: position.lat.toString(), lng: position.lng.toString() }, res)
+        .then(() => console.log("sucess"))
+        .catch(error => console.log(`error: ${error}`))
+})
+
+/**
  * Botão de panico
  */
 export const panicButton = functions.https.onRequest(async (req, res) => {
-    //TODO: enviar notificação para o app
-    //macaddress
-    //desativar pelo app
     const body = req.body as DeviceStatusRequest
     if(!body.macaddress){
         res.status(400).send("MacAddress is missing!")
@@ -207,7 +206,9 @@ export const panicButton = functions.https.onRequest(async (req, res) => {
 
     const fcm = new FirebaseMeessageService(db, admin.messaging());
 
-    fcm.send(deviceId, { panicButton: JSON.stringify(body.status) }, res)
+    fcm.send(deviceId, { type:"panicButton", panicButton: JSON.stringify(body.status) }, res)
+        .then(() => console.log("sucess"))
+        .catch(error => console.log(`error: ${error}`))
 })
 
 /**
@@ -226,7 +227,9 @@ export const disconnectedBand = functions.https.onRequest(async (req, res)=> {
 
     const fcm = new FirebaseMeessageService(db, admin.messaging());
 
-    fcm.send(deviceId, { disconnectedBand: JSON.stringify(body.status) }, res)
+    fcm.send(deviceId, { type:"disconnectedBand", disconnectedBand: JSON.stringify(body.status) }, res)
+        .then(() => console.log("sucess"))
+        .catch(error => console.log(`error: ${error}`))
 })
 
 /**
@@ -245,5 +248,7 @@ export const lowBattery = functions.https.onRequest(async (req, res) => {
 
     const fcm = new FirebaseMeessageService(db, admin.messaging());
 
-    fcm.send(deviceId, { lowBattery: JSON.stringify(body.status) }, res)
+    fcm.send(deviceId, { type:"lowBattery", lowBattery: JSON.stringify(body.status) }, res)
+        .then(() => console.log("sucess"))
+        .catch(error => console.log(`error: ${error}`))
 })
