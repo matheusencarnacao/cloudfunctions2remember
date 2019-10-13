@@ -80,7 +80,17 @@ export const lastPosition = functions.https.onRequest(async (req, res) => {
     }
     const deviceId = new StringUtils(currentPos.macaddress).convertToBase64()
 
-    db.ref(positionsBD)
+    const devicePositions = db.ref(positionsBD)
+
+    devicePositions.once('value')
+        .then(root => {
+            if(!root.hasChild(deviceId)){
+                res.sendStatus(404)
+            }
+        })
+        .catch(error => res.sendStatus(500))
+
+    devicePositions
         .child(deviceId)
         .orderByKey()
         .limitToLast(1)
